@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 #importando data
-dados = pd.read_csv("Dados_totais.csv")
-dados_generos =  pd.read_csv("data_by_genres.csv")
-dados_anos = pd.read_csv('data_by_year.csv')
+dados = pd.read_csv("../data/Dados_totais.csv")
+dados_generos =  pd.read_csv("../data/data_by_genres.csv")
+dados_anos = pd.read_csv("../data/data_by_year.csv")
 
 #Removendo colunas que não influenciaram 
 dados.drop(['explicit','key','mode'],axis=1)
@@ -33,7 +33,7 @@ projection = pd.DataFrame(columns=['x', 'y'], data=genre_embedding_pca)
 
 from sklearn.cluster import KMeans
 # calculo das disntancias entre elementos
-kmeans_pca = KMeans(n_clusters=5, verbose=True, random_state=SEED)
+kmeans_pca = KMeans(n_clusters=5, verbose=False, random_state=SEED)
 
 kmeans_pca.fit(projection)
 
@@ -68,28 +68,36 @@ projection_m['cluster_pca'] = kmeans_pca_pipeline.predict(projection_m)
 projection_m['artist'] = dados['artists']
 projection_m['song'] = dados['artists_song']
 
-def Recomendador_Musica(nome_musica):
+def Recomendador_Musica():
     from sklearn.metrics.pairwise import euclidean_distances
-
+    nome_musica = str(input("Qual música você acabou de ouvir: "))
+    try:
     #Buscando elemetos de menor distância do nosso parametro
-    cluster = list(projection_m[projection_m['song']== nome_musica]['cluster_pca'])[0]
-    
-    musicas_recomendadas = projection_m[projection_m['cluster_pca']== cluster][[0, 1, 'song']]
-    x_musica = list(projection_m[projection_m['song']== nome_musica][0])[0]
-    y_musica = list(projection_m[projection_m['song']== nome_musica][1])[0]
+        cluster = list(projection_m[projection_m['song']== nome_musica]['cluster_pca'])[0]
+        
+        musicas_recomendadas = projection_m[projection_m['cluster_pca']== cluster][[0, 1, 'song']]
+        x_musica = list(projection_m[projection_m['song']== nome_musica][0])[0]
+        y_musica = list(projection_m[projection_m['song']== nome_musica][1])[0]
 
-    #distâncias euclidianas
-    distancias = euclidean_distances(musicas_recomendadas[[0, 1]], [[x_musica, y_musica]])
-    musicas_recomendadas['id'] = dados['id']
-    musicas_recomendadas['distancias']= distancias
-    recomendada = musicas_recomendadas.sort_values('distancias').head(10)
-    muscias_validas = recomendada['song'].to_string(index=False)
-    
-    return muscias_validas
+        #distâncias euclidianas
+        distancias = euclidean_distances(musicas_recomendadas[[0, 1]], [[x_musica, y_musica]])
+        musicas_recomendadas['id'] = dados['id']
+        musicas_recomendadas['distancias']= distancias
+        recomendada = musicas_recomendadas.sort_values('distancias').head(10)
+        
+        musicas_validas = recomendada['song'].to_string(index=False)
+        
+        return musicas_validas
+    except IndexError:
+        print("The song isn't in our dataset, please try again.")
+        return None
 
-nome_musica = str(input("Qual música você acabou de ouvir: "))
 
 
-print("Aqui estão algumas que você deve ouvir em seguida: \n{}".format(Recomendador_Musica(nome_musica)))
+ans = Recomendador_Musica()
 
-     
+if ans is not None:
+    print("\nHere are some recomendations:")
+    print(ans)
+
+
